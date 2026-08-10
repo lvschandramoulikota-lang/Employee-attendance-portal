@@ -903,3 +903,12 @@ export async function supabaseToggleBreak(employeeId: string): Promise<Attendanc
 
   return updatedRec;
 }
+import { createClient } from '@supabase/supabase-js';
+
+// Hardcoded verified configuration credentials
+const supabaseUrl = 'https://supabase.co';
+const supabaseAnonKey = 'sb_publishable_d6PtOQbD3lr-rRIdiZHLjg_MUkcYgNS';
+
+// Initialize direct connection
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export default supabase;
