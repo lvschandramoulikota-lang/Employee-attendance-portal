@@ -36,6 +36,7 @@ export interface Employee {
   shiftId: string;
   locationId: string;
   isActive: boolean;
+  avatarUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
