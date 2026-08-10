@@ -10,24 +10,32 @@ import {
 } from '../types';
 
 // Safely access env vars using Vite's native environment handlers
-const metaEnv = (import.meta as any).env || {};
-const supabaseUrl = 'https://supabase.co';
-  (metaEnv.VITE_SUPABASE_URL as string) ||
-  (metaEnv.NEXT_PUBLIC_SUPABASE_URL as string) ||
-  '';
+function getSupabaseCredentials(): { url: string; key: string } {
+  const metaEnv = (import.meta as any)?.env || {};
 
-const supabaseAnonKey = 'sb_publishable_d6PtOQbD3lr-rRIdiZHLjg_MUkcYgNS';
-  (metaEnv.VITE_SUPABASE_ANON_KEY as string) ||
-  (metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY as string) ||
-  '';
+  const url =
+    (metaEnv.VITE_SUPABASE_URL as string) ||
+    (metaEnv.NEXT_PUBLIC_SUPABASE_URL as string) ||
+    (metaEnv.SUPABASE_URL as string) ||
+    '';
+
+  const key =
+    (metaEnv.VITE_SUPABASE_ANON_KEY as string) ||
+    (metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY as string) ||
+    (metaEnv.SUPABASE_ANON_KEY as string) ||
+    '';
+
+  return { url, key };
+}
 
 let supabaseInstance: SupabaseClient | null = null;
 
 export function getSupabaseClient(): SupabaseClient | null {
   if (supabaseInstance) return supabaseInstance;
-  if (supabaseUrl && supabaseAnonKey) {
+  const { url, key } = getSupabaseCredentials();
+  if (url && key) {
     try {
-      supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+      supabaseInstance = createClient(url, key);
       return supabaseInstance;
     } catch (err) {
       console.warn('Failed to initialize Supabase client:', err);
