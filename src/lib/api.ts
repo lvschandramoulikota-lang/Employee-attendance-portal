@@ -60,19 +60,6 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
 // Authentication
 export async function loginAdmin(username: string, password: string): Promise<{ success: boolean; user: AdminUser }> {
-  try {
-    const res = await fetch('/api/auth/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-    if (res.ok) {
-      return await handleResponse<{ success: boolean; user: AdminUser }>(res);
-    }
-  } catch (err) {
-    console.warn('API endpoint unavailable, using direct Supabase Admin verification:', err);
-  }
-
   const admin = await supabaseLoginAdmin(username, password);
   return { success: true, user: admin };
 }
@@ -100,21 +87,11 @@ export async function changeAdminPassword(
   currentPassword: string,
   newPassword: string
 ): Promise<{ success: boolean; message: string }> {
-  try {
-    const res = await fetch('/api/auth/admin/change-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId, currentPassword, newPassword }),
-    });
-    if (res.ok) {
-      return await handleResponse<{ success: boolean; message: string }>(res);
-    }
-  } catch (err) {
-    console.warn('API endpoint unavailable for password change:', err);
-  }
-
   const client = getSupabaseClient();
   if (client) {
+    try {
+      await client.from('admin_users').update({ password: newPassword }).eq('id', adminId);
+    } catch {}
     try {
       await client.from('admins').update({ passwordHash: newPassword }).eq('id', adminId);
     } catch {}
