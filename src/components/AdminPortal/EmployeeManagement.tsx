@@ -20,10 +20,24 @@ export default function EmployeeManagement() {
     fetchData();
   }, []);
 
-  async function fetchData() {
+    async function fetchData() {
     setLoading(true);
-    const { data } = await supabase.from('employees').select('*');
-    setEmployees(data || []);
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/employees?select=*`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
     setLoading(false);
   }
 
