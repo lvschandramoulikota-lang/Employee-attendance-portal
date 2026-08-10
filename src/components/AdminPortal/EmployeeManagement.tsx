@@ -105,20 +105,20 @@ export default function EmployeeManagement() {
               <th className="p-4 text-right">Database Sync</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-800">
+                    <tbody className="divide-y divide-gray-800">
             {loading ? (
               <tr><td colSpan={3} className="p-6 text-center text-gray-500">Connecting to cloud servers...</td></tr>
             ) : employees.length === 0 ? (
               <tr><td colSpan={3} className="p-6 text-center text-gray-500">No workforce directories stored. Add data above.</td></tr>
-            ) : employees.map((emp) => (
-              <tr key={emp.id} className="hover:bg-gray-800/20">
+            ) : employees.map((emp: any) => (
+              <tr key={emp.id || emp.employeeId} className="hover:bg-gray-800/20">
                 <td className="p-4">
                   <div className="font-semibold text-gray-200">{emp.name}</div>
-                  <div className="text-xs text-gray-400">ID: {emp.id} • {emp.email}</div>
+                  <div className="text-xs text-gray-400">ID: {emp.id || emp.employeeId} • {emp.email}</div>
                 </td>
                 <td className="p-4">
                   <div className="text-gray-200">{emp.department}</div>
-                  <div className="text-xs text-gray-400">{emp.role}</div>
+                  <div className="text-xs text-gray-400">{emp.role || emp.designation}</div>
                 </td>
                 <td className="p-4 text-right text-xs text-emerald-400 font-semibold">🟢 Secured Cloud Row</td>
               </tr>
