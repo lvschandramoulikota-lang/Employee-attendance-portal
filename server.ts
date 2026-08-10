@@ -4,7 +4,30 @@ import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { initializeApp, getApps, getApp } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import ExcelJS from 'exceljs';
+
+// Load Supabase configuration from environment variables (Vercel standard)
+const supabaseUrl =
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL;
+
+const supabaseKey =
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+let supabase: SupabaseClient | null = null;
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('⚡ Supabase database client initialized with URL:', supabaseUrl);
+  } catch (err) {
+    console.warn('Supabase initialization error:', err);
+  }
+}
 
 // Dynamically load optional Firebase configuration if file exists
 let firebaseConfig: {
@@ -67,8 +90,19 @@ let shiftsStore: ShiftSchedule[] = [];
 let locationsStore: OfficeLocation[] = [];
 let attendanceRecordsStore: AttendanceRecord[] = [];
 
-// Data Access Helpers with Automatic Firestore Persistence
+// Data Access Helpers with Automatic Supabase & Firestore Persistence
 async function fetchAdmins() {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('admins').select('*');
+      if (!error && data && data.length > 0) {
+        adminUsersStore = data;
+        return data;
+      }
+    } catch (e) {
+      console.warn('Supabase admins read warning:', e);
+    }
+  }
   if (db) {
     try {
       const snap = await db.collection('admins').get();
@@ -85,6 +119,17 @@ async function fetchAdmins() {
 }
 
 async function fetchEmployees() {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('employees').select('*');
+      if (!error && data && data.length > 0) {
+        employeesStore = data;
+        return data;
+      }
+    } catch (e) {
+      console.warn('Supabase employees read warning:', e);
+    }
+  }
   if (db) {
     try {
       const snap = await db.collection('employees').get();
@@ -108,6 +153,19 @@ async function saveEmployeeStore(emp: Employee & { passwordHash?: string }) {
     employeesStore.push(emp);
   }
 
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('employees').upsert(emp);
+      if (error) {
+        console.warn('Supabase save employee warning:', error.message);
+      } else {
+        console.log('✅ Employee saved to Supabase:', emp.id);
+      }
+    } catch (e) {
+      console.error('❌ Supabase save employee error:', e);
+    }
+  }
+
   if (db) {
     try {
       await db.collection('employees').doc(emp.id).set(emp, { merge: true });
@@ -119,6 +177,17 @@ async function saveEmployeeStore(emp: Employee & { passwordHash?: string }) {
 }
 
 async function fetchShifts() {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('shifts').select('*');
+      if (!error && data && data.length > 0) {
+        shiftsStore = data as ShiftSchedule[];
+        return shiftsStore;
+      }
+    } catch (e) {
+      console.warn('Supabase shifts read warning:', e);
+    }
+  }
   if (db) {
     try {
       const snap = await db.collection('shifts').get();
@@ -142,6 +211,19 @@ async function saveShiftStore(shift: ShiftSchedule) {
     shiftsStore.push(shift);
   }
 
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('shifts').upsert(shift);
+      if (error) {
+        console.warn('Supabase save shift warning:', error.message);
+      } else {
+        console.log('✅ Shift saved to Supabase:', shift.id);
+      }
+    } catch (e) {
+      console.error('❌ Supabase save shift error:', e);
+    }
+  }
+
   if (db) {
     try {
       await db.collection('shifts').doc(shift.id).set(shift, { merge: true });
@@ -153,6 +235,17 @@ async function saveShiftStore(shift: ShiftSchedule) {
 }
 
 async function fetchLocations() {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('locations').select('*');
+      if (!error && data && data.length > 0) {
+        locationsStore = data as OfficeLocation[];
+        return locationsStore;
+      }
+    } catch (e) {
+      console.warn('Supabase locations read warning:', e);
+    }
+  }
   if (db) {
     try {
       const snap = await db.collection('locations').get();
@@ -176,6 +269,19 @@ async function saveLocationStore(loc: OfficeLocation) {
     locationsStore.push(loc);
   }
 
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('locations').upsert(loc);
+      if (error) {
+        console.warn('Supabase save location warning:', error.message);
+      } else {
+        console.log('✅ Location saved to Supabase:', loc.id);
+      }
+    } catch (e) {
+      console.error('❌ Supabase save location error:', e);
+    }
+  }
+
   if (db) {
     try {
       await db.collection('locations').doc(loc.id).set(loc, { merge: true });
@@ -187,6 +293,22 @@ async function saveLocationStore(loc: OfficeLocation) {
 }
 
 async function fetchAttendance() {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('attendance_records').select('*');
+      if (!error && data && data.length > 0) {
+        attendanceRecordsStore = data as AttendanceRecord[];
+        return attendanceRecordsStore;
+      }
+      const { data: data2, error: error2 } = await supabase.from('attendanceRecords').select('*');
+      if (!error2 && data2 && data2.length > 0) {
+        attendanceRecordsStore = data2 as AttendanceRecord[];
+        return attendanceRecordsStore;
+      }
+    } catch (e) {
+      console.warn('Supabase attendance read warning:', e);
+    }
+  }
   if (db) {
     try {
       const snap = await db.collection('attendanceRecords').get();
@@ -208,6 +330,19 @@ async function saveAttendanceStore(rec: AttendanceRecord) {
     attendanceRecordsStore[idx] = { ...attendanceRecordsStore[idx], ...rec };
   } else {
     attendanceRecordsStore.push(rec);
+  }
+
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('attendance_records').upsert(rec);
+      if (error) {
+        await supabase.from('attendanceRecords').upsert(rec);
+      } else {
+        console.log('✅ Attendance saved to Supabase:', rec.id);
+      }
+    } catch (e) {
+      console.error('❌ Supabase save attendance error:', e);
+    }
   }
 
   if (db) {
@@ -388,60 +523,100 @@ async function seedInitialDataIfNeeded() {
   employeesStore = initialEmployees;
   attendanceRecordsStore = sampleRecords;
 
-  if (!db) {
-    console.log('ℹ️ Running in memory store mode.');
-    return;
+  if (supabase) {
+    try {
+      const { data: aData } = await supabase.from('admins').select('*');
+      if (!aData || aData.length === 0) {
+        await supabase.from('admins').upsert(defaultAdmin);
+      } else {
+        adminUsersStore = aData;
+      }
+
+      const { data: lData } = await supabase.from('locations').select('*');
+      if (!lData || lData.length === 0) {
+        await supabase.from('locations').upsert(initialLocations);
+      } else {
+        locationsStore = lData;
+      }
+
+      const { data: sData } = await supabase.from('shifts').select('*');
+      if (!sData || sData.length === 0) {
+        await supabase.from('shifts').upsert(initialShifts);
+      } else {
+        shiftsStore = sData;
+      }
+
+      const { data: eData } = await supabase.from('employees').select('*');
+      if (!eData || eData.length === 0) {
+        await supabase.from('employees').upsert(initialEmployees);
+      } else {
+        employeesStore = eData;
+      }
+
+      const { data: attData } = await supabase.from('attendance_records').select('*');
+      if (!attData || attData.length === 0) {
+        await supabase.from('attendance_records').upsert(sampleRecords);
+      } else {
+        attendanceRecordsStore = attData;
+      }
+
+      console.log('✅ Supabase connected & seeded successfully!');
+    } catch (e) {
+      console.warn('Supabase initial seed/sync skipped or failed:', e);
+    }
   }
 
-  try {
-    const adminSnap = await db.collection('admins').get();
-    if (adminSnap.empty) {
-      await db.collection('admins').doc(defaultAdmin.id).set(defaultAdmin);
-    } else {
-      adminUsersStore = adminSnap.docs.map((d) => d.data() as any);
-    }
-
-    const locSnap = await db.collection('locations').get();
-    if (locSnap.empty) {
-      for (const loc of initialLocations) {
-        await db.collection('locations').doc(loc.id).set(loc);
+  if (db) {
+    try {
+      const adminSnap = await db.collection('admins').get();
+      if (adminSnap.empty) {
+        await db.collection('admins').doc(defaultAdmin.id).set(defaultAdmin);
+      } else {
+        adminUsersStore = adminSnap.docs.map((d) => d.data() as any);
       }
-    } else {
-      locationsStore = locSnap.docs.map((d) => d.data() as OfficeLocation);
-    }
 
-    const shiftSnap = await db.collection('shifts').get();
-    if (shiftSnap.empty) {
-      for (const sh of initialShifts) {
-        await db.collection('shifts').doc(sh.id).set(sh);
+      const locSnap = await db.collection('locations').get();
+      if (locSnap.empty) {
+        for (const loc of initialLocations) {
+          await db.collection('locations').doc(loc.id).set(loc);
+        }
+      } else {
+        locationsStore = locSnap.docs.map((d) => d.data() as OfficeLocation);
       }
-    } else {
-      shiftsStore = shiftSnap.docs.map((d) => d.data() as ShiftSchedule);
-    }
 
-    const empSnap = await db.collection('employees').get();
-    if (empSnap.empty) {
-      for (const emp of initialEmployees) {
-        await db.collection('employees').doc(emp.id).set(emp);
+      const shiftSnap = await db.collection('shifts').get();
+      if (shiftSnap.empty) {
+        for (const sh of initialShifts) {
+          await db.collection('shifts').doc(sh.id).set(sh);
+        }
+      } else {
+        shiftsStore = shiftSnap.docs.map((d) => d.data() as ShiftSchedule);
       }
-    } else {
-      employeesStore = empSnap.docs.map((d) => d.data() as any);
-    }
 
-    const attSnap = await db.collection('attendanceRecords').get();
-    if (attSnap.empty) {
-      for (const rec of sampleRecords) {
-        await db.collection('attendanceRecords').doc(rec.id).set(rec);
+      const empSnap = await db.collection('employees').get();
+      if (empSnap.empty) {
+        for (const emp of initialEmployees) {
+          await db.collection('employees').doc(emp.id).set(emp);
+        }
+      } else {
+        employeesStore = empSnap.docs.map((d) => d.data() as any);
       }
-    } else {
-      attendanceRecordsStore = attSnap.docs.map(
-        (d) => d.data() as AttendanceRecord
-      );
-    }
 
-    console.log('✅ Firestore persistent database connected & initialized!');
-  } catch (err) {
-    console.warn('Firestore seeding/sync skipped or failed:', err);
+      const attSnap = await db.collection('attendanceRecords').get();
+      if (attSnap.empty) {
+        for (const rec of sampleRecords) {
+          await db.collection('attendanceRecords').doc(rec.id).set(rec);
+        }
+      } else {
+        attendanceRecordsStore = attSnap.docs.map(
+          (d) => d.data() as AttendanceRecord
+        );
+      }
+
+      console.log('✅ Firestore persistent database connected & initialized!');
+    } catch (err) {
+      console.warn('Firestore seeding/sync skipped or failed:', err);
+    }
   }
 }
 
@@ -552,6 +727,17 @@ async function startServer() {
       admin.passwordHash = newPassword;
       admin.updatedAt = new Date().toISOString();
 
+      if (supabase) {
+        try {
+          await supabase.from('admins').update({
+            passwordHash: newPassword,
+            updatedAt: admin.updatedAt,
+          }).eq('id', adminId);
+        } catch (e) {
+          console.warn('Supabase admin update failed:', e);
+        }
+      }
+
       if (db) {
         try {
           await db.collection('admins').doc(adminId).update({
@@ -654,6 +840,13 @@ async function startServer() {
     const { id } = req.params;
     try {
       employeesStore = employeesStore.filter((e) => e.id !== id);
+      if (supabase) {
+        try {
+          await supabase.from('employees').delete().eq('id', id);
+        } catch (e) {
+          console.warn('Supabase delete employee failed:', e);
+        }
+      }
       if (db) {
         try {
           await db.collection('employees').doc(id).delete();
@@ -730,6 +923,13 @@ async function startServer() {
     const { id } = req.params;
     try {
       shiftsStore = shiftsStore.filter((s) => s.id !== id);
+      if (supabase) {
+        try {
+          await supabase.from('shifts').delete().eq('id', id);
+        } catch (e) {
+          console.warn('Supabase delete shift failed:', e);
+        }
+      }
       if (db) {
         try {
           await db.collection('shifts').doc(id).delete();
@@ -806,6 +1006,13 @@ async function startServer() {
     const { id } = req.params;
     try {
       locationsStore = locationsStore.filter((l) => l.id !== id);
+      if (supabase) {
+        try {
+          await supabase.from('locations').delete().eq('id', id);
+        } catch (e) {
+          console.warn('Supabase delete location failed:', e);
+        }
+      }
       if (db) {
         try {
           await db.collection('locations').doc(id).delete();

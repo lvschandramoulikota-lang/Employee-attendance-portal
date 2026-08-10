@@ -8,10 +8,31 @@ import {
 } from '../types';
 
 async function handleResponse<T>(res: Response): Promise<T> {
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'An unexpected server error occurred.');
+  const contentType = res.headers.get('content-type') || '';
+  let data: any = null;
+
+  if (contentType.includes('application/json')) {
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+  } else {
+    const rawText = await res.text().catch(() => '');
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}: ${rawText.slice(0, 120) || res.statusText}`);
+      }
+      throw new Error(`Unexpected non-JSON response from server.`);
+    }
   }
+
+  if (!res.ok) {
+    throw new Error(data?.error || `Server error (${res.status}): ${res.statusText}`);
+  }
+
   return data as T;
 }
 
