@@ -10,45 +10,20 @@ import {
   Clock,
   MapPin,
 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '../../lib/supabase';
 import { Employee, ShiftSchedule, OfficeLocation } from '../../types';
 
-// Safely obtain environment variables for Supabase connection
-const getEnvVar = (name: string): string => {
-  try {
-    const metaEnv = (import.meta as any)?.env;
-    if (metaEnv) {
-      if (metaEnv[name]) return metaEnv[name];
-      if (metaEnv[`VITE_${name}`]) return metaEnv[`VITE_${name}`];
-      if (metaEnv[`NEXT_PUBLIC_${name}`]) return metaEnv[`NEXT_PUBLIC_${name}`];
-    }
-  } catch {}
-
-  try {
-    const procEnv = typeof process !== 'undefined' ? process.env : null;
-    if (procEnv) {
-      if (procEnv[name]) return procEnv[name];
-      if (procEnv[`VITE_${name}`]) return procEnv[`VITE_${name}`];
-      if (procEnv[`NEXT_PUBLIC_${name}`]) return procEnv[`NEXT_PUBLIC_${name}`];
-    }
-  } catch {}
-
-  return '';
-};
-
+// Native Vite environment variable access
+const metaEnv = (import.meta as any).env || {};
 const supabaseUrl =
-  getEnvVar('NEXT_PUBLIC_SUPABASE_URL') ||
-  getEnvVar('SUPABASE_URL') ||
-  getEnvVar('VITE_SUPABASE_URL') ||
-  'https://placeholder.supabase.co';
+  (metaEnv.VITE_SUPABASE_URL as string) ||
+  (metaEnv.NEXT_PUBLIC_SUPABASE_URL as string) ||
+  '';
 
 const supabaseAnonKey =
-  getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY') ||
-  getEnvVar('SUPABASE_ANON_KEY') ||
-  getEnvVar('VITE_SUPABASE_ANON_KEY') ||
-  'placeholder-anon-key';
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  (metaEnv.VITE_SUPABASE_ANON_KEY as string) ||
+  (metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY as string) ||
+  '';
 
 const mapEmployee = (item: any): Employee => ({
   id: String(item.id),
@@ -120,6 +95,12 @@ export const EmployeeManagement: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
+
       // 1. Fetch employees directly from Supabase 'employees' table
       const { data: empData, error: empErr } = await supabase.from('employees').select('*');
       if (empErr) {
@@ -208,6 +189,11 @@ export const EmployeeManagement: React.FC = () => {
 
     setFormLoading(true);
     try {
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        throw new Error('Supabase client is not initialized');
+      }
+
       if (editingEmployee) {
         // Direct Supabase UPDATE
         const updatePayload: any = {
@@ -310,9 +296,12 @@ export const EmployeeManagement: React.FC = () => {
   const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to remove employee "${name}"?`)) {
       try {
-        const { error } = await supabase.from('employees').delete().eq('id', id);
-        if (error) {
-          await supabase.from('employees').delete().eq('employee_id', id);
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          const { error } = await supabase.from('employees').delete().eq('id', id);
+          if (error) {
+            await supabase.from('employees').delete().eq('employee_id', id);
+          }
         }
         await loadData();
       } catch (err) {

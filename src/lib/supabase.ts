@@ -9,38 +9,17 @@ import {
   BreakLog,
 } from '../types';
 
-// Safely access env vars in Vite, Next, or standard process environment
-const getEnvVar = (name: string): string => {
-  try {
-    const metaEnv = (import.meta as any)?.env;
-    if (metaEnv) {
-      if (metaEnv[name]) return metaEnv[name];
-      if (metaEnv[`VITE_${name}`]) return metaEnv[`VITE_${name}`];
-      if (metaEnv[`NEXT_PUBLIC_${name}`]) return metaEnv[`NEXT_PUBLIC_${name}`];
-    }
-  } catch {}
-
-  try {
-    const procEnv = typeof process !== 'undefined' ? process.env : null;
-    if (procEnv) {
-      if (procEnv[name]) return procEnv[name];
-      if (procEnv[`VITE_${name}`]) return procEnv[`VITE_${name}`];
-      if (procEnv[`NEXT_PUBLIC_${name}`]) return procEnv[`NEXT_PUBLIC_${name}`];
-    }
-  } catch {}
-
-  return '';
-};
-
+// Safely access env vars using Vite's native environment handlers
+const metaEnv = (import.meta as any).env || {};
 const supabaseUrl =
-  getEnvVar('NEXT_PUBLIC_SUPABASE_URL') ||
-  getEnvVar('SUPABASE_URL') ||
-  getEnvVar('VITE_SUPABASE_URL');
+  (metaEnv.VITE_SUPABASE_URL as string) ||
+  (metaEnv.NEXT_PUBLIC_SUPABASE_URL as string) ||
+  '';
 
 const supabaseAnonKey =
-  getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY') ||
-  getEnvVar('SUPABASE_ANON_KEY') ||
-  getEnvVar('VITE_SUPABASE_ANON_KEY');
+  (metaEnv.VITE_SUPABASE_ANON_KEY as string) ||
+  (metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY as string) ||
+  '';
 
 let supabaseInstance: SupabaseClient | null = null;
 
