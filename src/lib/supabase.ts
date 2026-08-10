@@ -11,12 +11,12 @@ import {
 
 // Safely access env vars using Vite's native environment handlers
 const metaEnv = (import.meta as any).env || {};
-const supabaseUrl =
+const supabaseUrl = 'https://supabase.co';
   (metaEnv.VITE_SUPABASE_URL as string) ||
   (metaEnv.NEXT_PUBLIC_SUPABASE_URL as string) ||
   '';
 
-const supabaseAnonKey =
+const supabaseAnonKey = 'sb_publishable_d6PtOQbD3lr-rRIdiZHLjg_MUkcYgNS';
   (metaEnv.VITE_SUPABASE_ANON_KEY as string) ||
   (metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY as string) ||
   '';
