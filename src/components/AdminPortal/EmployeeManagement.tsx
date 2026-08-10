@@ -13,20 +13,6 @@ import {
 import { getSupabaseClient } from '../../lib/supabase';
 import { Employee, ShiftSchedule, OfficeLocation } from '../../types';
 
-// Native Vite environment variable access
-const metaEnv = (import.meta as any)?.env || {};
-const supabaseUrl =
-  (metaEnv.VITE_SUPABASE_URL as string) ||
-  (metaEnv.NEXT_PUBLIC_SUPABASE_URL as string) ||
-  (metaEnv.SUPABASE_URL as string) ||
-  '';
-
-const supabaseAnonKey =
-  (metaEnv.VITE_SUPABASE_ANON_KEY as string) ||
-  (metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY as string) ||
-  (metaEnv.SUPABASE_ANON_KEY as string) ||
-  '';
-
 const mapEmployee = (item: any): Employee => ({
   id: String(item.id),
   employeeId: String(item.employee_id || item.employeeId || item.id),

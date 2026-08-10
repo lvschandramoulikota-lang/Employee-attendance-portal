@@ -29,20 +29,26 @@ function getSupabaseCredentials(): { url: string; key: string } {
 }
 
 let supabaseInstance: SupabaseClient | null = null;
+let cachedUrl = '';
+let cachedKey = '';
 
 export function getSupabaseClient(): SupabaseClient | null {
-  if (supabaseInstance) return supabaseInstance;
   const { url, key } = getSupabaseCredentials();
-  if (url && key) {
-    try {
-      supabaseInstance = createClient(url, key);
-      return supabaseInstance;
-    } catch (err) {
-      console.warn('Failed to initialize Supabase client:', err);
-      return null;
-    }
+  if (!url || !key) return null;
+
+  if (supabaseInstance && url === cachedUrl && key === cachedKey) {
+    return supabaseInstance;
   }
-  return null;
+
+  try {
+    supabaseInstance = createClient(url, key);
+    cachedUrl = url;
+    cachedKey = key;
+    return supabaseInstance;
+  } catch (err) {
+    console.warn('Failed to initialize Supabase client:', err);
+    return null;
+  }
 }
 
 const nowIso = () => new Date().toISOString();
