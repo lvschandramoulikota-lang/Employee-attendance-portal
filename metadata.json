@@ -1,0 +1,6 @@
+{
+  "name": "Workforce Attendance System",
+  "description": "Enterprise workforce attendance portal featuring isolated employee and admin routes, geofenced GPS check-ins, photo verification, break & overtime tracking, shift management, and Excel reporting.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

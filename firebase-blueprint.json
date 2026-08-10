@@ -1,0 +1,99 @@
+{
+  "entities": {
+    "admins": {
+      "title": "Admins",
+      "description": "System administrator credentials and settings",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "passwordHash": { "type": "string" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "username", "name"]
+    },
+    "employees": {
+      "title": "Employees",
+      "description": "Employee profiles, shifts, and geofence locations",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "passwordHash": { "type": "string" },
+        "department": { "type": "string" },
+        "designation": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string" },
+        "shiftId": { "type": "string" },
+        "locationId": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "employeeId", "name"]
+    },
+    "shifts": {
+      "title": "Shifts",
+      "description": "Shift schedule definitions",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "gracePeriodMinutes": { "type": "number" },
+        "allowedBreakMinutes": { "type": "number" },
+        "overtimeThresholdMinutes": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "startTime", "endTime"]
+    },
+    "locations": {
+      "title": "Locations",
+      "description": "Geofence office locations",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "radiusMeters": { "type": "number" },
+        "requiredAccuracyMeters": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "latitude", "longitude"]
+    },
+    "attendanceRecords": {
+      "title": "Attendance Records",
+      "description": "Employee check-ins, check-outs, and break logs",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "department": { "type": "string" },
+        "date": { "type": "string" },
+        "checkInTime": { "type": "string" },
+        "checkOutTime": { "type": "string" },
+        "checkInLat": { "type": "number" },
+        "checkInLng": { "type": "number" },
+        "checkInAccuracy": { "type": "number" },
+        "checkInGeofenceValid": { "type": "boolean" },
+        "checkInGeofenceName": { "type": "string" },
+        "breaks": { "type": "array" },
+        "totalBreakMinutes": { "type": "number" },
+        "workedMinutes": { "type": "number" },
+        "overtimeMinutes": { "type": "number" },
+        "status": { "type": "string" },
+        "remarks": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "employeeId", "date"]
+    }
+  }
+}
